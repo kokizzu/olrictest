@@ -17,12 +17,14 @@ import (
 
 func main() {
 	serviceId := id64.SID()
-	L.Print(`serviceID: ` + serviceId)
 
 	c := config.New("local")
 	ip := fmt.Sprintf("127.0.0.%d", rand.Int()%250+1)
-	c.MemberlistConfig = memberlist.DefaultLocalConfig()
-	c.MemberlistConfig.BindAddr = ip
+	mc := memberlist.DefaultLocalConfig()
+	mc.BindAddr = ip
+	mc.AdvertiseAddr = `127.0.0.255`
+
+	c.MemberlistConfig = mc
 	c.BindAddr = ip
 	ctx, cancel := context.WithCancel(context.Background())
 	c.Started = func() {
