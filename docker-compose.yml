@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  dist1:
+    build: .
+    networks:
+      - mynet
+    logging:
+        driver: journald
+        options:
+            tag: dist1
+  dist2:
+    build: .
+    networks:
+      - mynet
+    logging:
+        driver: journald
+        options:
+            tag: dist1
+        
+        
+networks:
+  mynet:
