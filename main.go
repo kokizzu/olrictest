@@ -12,6 +12,7 @@ import (
 	"github.com/buraksezer/olric/query"
 	"github.com/hashicorp/memberlist"
 	"github.com/kokizzu/gotro/L"
+	"github.com/kokizzu/gotro/S"
 	"github.com/kokizzu/id64"
 )
 
@@ -20,14 +21,40 @@ func main() {
 
 	c := config.New("local")
 
+	ipSuffix := rand.Int()%250 + 1
+	nodeIp := fmt.Sprintf("127.1.2.%d", ipSuffix)
+
 	{ // comment when trying docker
-		ip := fmt.Sprintf("127.1.2.%d", rand.Int()%250+1)
 		mc := memberlist.DefaultLocalConfig()
-		mc.BindAddr = ip
+		mc.BindAddr = nodeIp
 		mc.AdvertiseAddr = `127.255.255.255`
 		c.MemberlistConfig = mc
-		c.BindAddr = ip
+		c.BindAddr = nodeIp
 	}
+
+	const fName = `/tmp/1.txt`
+	raw := L.ReadFile(fName)
+	ipList := S.Split(raw, ` `)
+	raw += ` ` + nodeIp
+	L.CreateFile(fName, raw)
+	for _, ip := range ipList {
+		if ip == `` {
+			continue
+		}
+		c.Peers = append(c.Peers, ip)
+	}
+	defer func() {
+		raw := L.ReadFile(fName)
+		ipList := S.Split(raw, ` `)
+		raw = ``
+		for _, ip := range ipList {
+			if ip == nodeIp {
+				continue
+			}
+			raw += ` ` + ip
+		}
+		L.CreateFile(fName, raw)
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	c.Started = func() {
